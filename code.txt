@@ -1,4 +1,8 @@
+// Machine learning algorithm to predict covid fatalities
+// The purpose of this project is to predict the fatality of covid cases in Canada. Dataset has been taken from https://open.toronto.ca/.
 
+
+// Imported all the required libraries for the project
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.ml._
@@ -15,15 +19,25 @@ import org.apache.spark.ml.linalg.Vectors
 import org.apache.spark.ml.Pipeline
 
 
+// The data is stored in a dataframe
 val df = spark.read.option("header", "true").option("inferSchema", "true").csv("hdfs://10.128.0.2:8020/user/BigData/CovidCases.csv")
 
 df.printSchema()
 
+// Data Cleaning and Transformation
+
 df.select("Outcome").distinct().show()
+
+// Removed Null values
 
 val df1 = df.na.drop()
 
+// Remove the 'Active' values in Outcome variable as it is not required for the analysis
+
 val df2 = df1.filter("Outcome != 'ACTIVE'")
+
+// The dataset is unbalanced 
+// Under-sampling technique is used to balance the dataset
 
 val ResolvedDf = df2.filter("Outcome='RESOLVED'")
 
@@ -40,6 +54,8 @@ val Data = FatalDf.unionAll(ResolvedSampleDf)
 
 val regData = Data.select(col("Outcome"),col("Age Group"),col("Source of Infection"),col("Client Gender"))
 
+// Need to convert the label variable to Integer as Logistic Regression technique do not support string variables
+
 val regDataindexer = new StringIndexer()
   .setInputCol("Outcome")
   .setOutputCol("label")
@@ -49,13 +65,13 @@ val regDataindexed = regDataindexer.fit(regData).transform(regData)
 
 val dataReg = regDataindexed.drop("Outcome")
 
-// converting feature variable from strings into numerical values
+// Converting feature variable from strings into numerical values
 
 val AgeIndexer = new StringIndexer().setInputCol("Age Group").setOutputCol("AgeIndex")
 val SourceIndexer = new StringIndexer().setInputCol("Source of Infection").setOutputCol("SourceIndex")
 val GenderIndexer = new StringIndexer().setInputCol("Client Gender").setOutputCol("GenderIndex")
 
-// Convert Numerical Values into One hot encoding
+// Converting Numerical Values into One hot encoding
 
 val AgeEncoder = new OneHotEncoder().setInputCol("AgeIndex").setOutputCol("AgeVec")
 val SourceEncoder = new OneHotEncoder().setInputCol("SourceIndex").setOutputCol("SourceVec")
