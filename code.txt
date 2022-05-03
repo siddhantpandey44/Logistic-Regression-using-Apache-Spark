@@ -1,3 +1,5 @@
+// This project has been performed on Google Cloud Platform.
+
 // Machine learning algorithm to predict covid fatalities
 // The purpose of this project is to predict the fatality of covid cases in Canada. Dataset has been taken from https://open.toronto.ca/.
 
